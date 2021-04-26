@@ -1,28 +1,9 @@
-# import the necessary packages
-
 import argparse
 import cv2 as cv
 from object_detection import object_detector
 from sort import *
 from timeit import default_timer as timer
-
 import torch
-
-
-def get_peak_points(heatmaps):
-    N, C, H, W = heatmaps.shape
-    all_peak_points = []
-    for i in range(N):
-        peak_points = []
-        for j in range(C):
-            yy, xx = np.where(heatmaps[i, j] == heatmaps[i, j].max())
-            y = yy[0]
-            x = xx[0]
-            score = heatmaps[i, j].max()
-            peak_points.append([x, y, score])
-        all_peak_points.append(peak_points)
-    all_peak_points = np.array(all_peak_points)
-    return all_peak_points
 
 
 def predict_pose(image, model):
@@ -46,7 +27,6 @@ def predict_pose(image, model):
             peak_points.append([x, y, score])
         all_peak_points.append(peak_points)
     all_peak_points = np.array(all_peak_points)[0]
-
     return all_peak_points
 
 
@@ -54,28 +34,25 @@ def process(args):
 
     tracker = Sort(max_age=9, min_hits=3)
     memory = {}
-
     stream = cv.VideoCapture(args.input if args.input else 0)
-
     if args.classes:
         with open(args.classes, 'rt') as f:
             classes = f.read().rstrip('\n').split('\n')
     else:
         classes = list(np.arange(0, 100))
-
+        
     # initialize a list of colors to represent each possible class label
     np.random.seed(42)
     COLORS = np.random.randint(0, 255, size=(200, 3), dtype="uint8")
-
     writer = None
     frameIndex = 0
+    
     # loop over frames from the video file stream
     prev_time = timer()
     accum_time = 0
     curr_fps = 0
     predictor = object_detector(args.model, args.config)
     pose_model = torch.jit.load('KFS_NET.pt')
-
     fps = ""
     while stream.isOpened():
         total_time1 = timer()
@@ -97,10 +74,9 @@ def process(args):
             break
         getimg_time2 = timer()
         print("Read Time:", (getimg_time2 - getimg_time1)*1000, "ms")
+        
         det_time1 = timer()
-
         predictions = predictor.predict(frame)
-
         for output in predictions:
             for detection in output:
                 scores = detection[5:]  
@@ -118,7 +94,6 @@ def process(args):
                     classIDs.append(classID)
                     center = [centerX, centerY]
                     midPoint.append(center)
-
 
         # apply non-maxima suppression to suppress weak, overlapping
         # bounding boxes
