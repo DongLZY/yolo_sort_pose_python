@@ -130,6 +130,7 @@ def process(args):
             i = int(0)
             for box in boxes:
                 # extract the bounding box coordinates
+                # x1, y1, x2, y2
                 (x, y) = (int(box[0]), int(box[1]))
                 (w, h) = (int(box[2]), int(box[3]))
 
